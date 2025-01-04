@@ -232,13 +232,14 @@ defmodule Goth.Config do
   end
 
   def get_configuration_data(configuration_file) do
-    if File.regular?(configuration_file) do
-      configuration_data = configuration_file |> File.read!() |> decode_ini()
-
-      # Only retrieve the required data.
-      %{"project_id" => configuration_data["core"]["project"], "actor_email" => configuration_data["core"]["account"]}
+    with true <- File.regular?(configuration_file),
+         configuration_data <- configuration_file |> File.read!() |> decode_ini(),
+         project_id when not is_nil(project_id) <- configuration_data["core"]["project"],
+         actor_email when not is_nil(actor_email) <- configuration_data["core"]["account"] do
+      %{"project_id" => project_id, "actor_email" => actor_email}
     else
-      nil
+      _ ->
+        nil
     end
   end
 

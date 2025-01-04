@@ -150,6 +150,30 @@ defmodule Goth.ConfigTest do
     Application.start(:goth)
   end
 
+  test "Reading blank configuration should return nil" do
+    current_json = Application.get_env(:goth, :json)
+    Application.put_env(:goth, :json, nil, persistent: true)
+
+    current_config_root = Application.get_env(:goth, :config_root_dir)
+
+    config_root = Path.expand("test/data/home/gcloud")
+    Application.put_env(:goth, :config_root_dir, config_root)
+
+    Application.stop(:goth)
+    Application.start(:goth)
+
+    data =
+      Path.expand("test/data/home/gcloud/configurations/blank_config_default")
+      |> Config.get_configuration_data()
+
+    assert(data == nil)
+
+    Application.put_env(:goth, :config_root_dir, current_config_root, persistent: true)
+    Application.put_env(:goth, :json, current_json, persistent: true)
+    Application.stop(:goth)
+    Application.start(:goth)
+  end
+
   test "GOOGLE_APPLICATION_CREDENTIALS is read" do
     # The test configuration sets an example JSON blob. We override it briefly
     # during this test.
