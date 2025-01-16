@@ -42,6 +42,7 @@ defmodule Goth.Mixfile do
       {:jose, "~> 1.11"},
       {:jason, "~> 1.1"},
       {:finch, "~> 0.17"},
+      {:castore, "~> 1.0", only: :test},
       {:bypass, "~> 2.1", only: :test},
       {:ex_doc, "~> 0.19", only: :dev},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
