@@ -191,6 +191,26 @@ defmodule Goth.TokenTest do
     assert token.scope == nil
   end
 
+  test "fetch/1 from instance metadata with scopes query" do
+    bypass = Bypass.open()
+
+    Bypass.expect(bypass, fn conn ->
+      assert conn.request_path == "/computeMetadata/v1/instance/service-accounts/alice/token"
+      assert conn.query_params == %{"scopes" => "scope_a,scope_b"}
+
+      body = ~s|{"access_token":"dummy","expires_in":3599,"token_type":"Bearer"}|
+      Plug.Conn.resp(conn, 200, body)
+    end)
+
+    config = %{
+      source: {:metadata, account: "alice", url: "http://localhost:#{bypass.port}", scopes: ["scope_a", "scope_b"]}
+    }
+
+    {:ok, token} = Goth.Token.fetch(config)
+    assert token.token == "dummy"
+    assert token.scope == nil
+  end
+
   test "fetch/1 from workload identity" do
     token_bypass = Bypass.open()
     sa_token_bypass = Bypass.open()
