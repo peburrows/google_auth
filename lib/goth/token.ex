@@ -401,17 +401,26 @@ defmodule Goth.Token do
     handle_workload_identity_response(response, config)
   end
 
+  defp metadata_url(base_url, path, account, nil, nil) do
+    "#{base_url}#{path}#{account}/token"
+  end
+
+  defp metadata_url(base_url, path, account, nil, scopes) do
+    scopes_query = Enum.join(scopes, ",")
+    "#{base_url}#{path}#{account}/token?scopes=#{scopes_query}"
+  end
+
+  defp metadata_url(base_url, path, account, audience, _scopes) do
+    "#{base_url}#{path}#{account}/identity?audience=#{audience}"
+  end
+
   defp metadata_options(options) do
     account = Keyword.get(options, :account, "default")
     audience = Keyword.get(options, :audience, nil)
+    scopes = Keyword.get(options, :scopes, nil)
     path = "/computeMetadata/v1/instance/service-accounts/"
     base_url = Keyword.get(options, :url, "http://metadata.google.internal")
-
-    url =
-      case audience do
-        nil -> "#{base_url}#{path}#{account}/token"
-        audience -> "#{base_url}#{path}#{account}/identity?audience=#{audience}"
-      end
+    url = metadata_url(base_url, path, account, audience, scopes)
 
     {url, audience}
   end
