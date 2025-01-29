@@ -130,7 +130,9 @@ defmodule Goth.Token do
 
     * `"subject_token_type"`
 
-    * `"credential_source"` - information about how to retrieve the subject token, can contain the following keys:
+    * `"subject_token"`
+
+    * `"credential_source"` - information about how to retrieve the subject token if not provided, can contain the following keys:
       * `"format"` - including a `"type"` of `"json"` or `"text"` and optionally `"subject_token_field_name"` if `"json"`
 
       * `"file"` - file to read the subject token from
@@ -380,9 +382,17 @@ defmodule Goth.Token do
     %{
       "token_url" => token_url,
       "audience" => audience,
-      "subject_token_type" => subject_token_type,
-      "credential_source" => credential_source
+      "subject_token_type" => subject_token_type
     } = credentials
+
+    subject_token =
+      case credentials do
+        %{"subject_token" => subject_token} ->
+          subject_token
+
+        %{"credential_source" => credential_source} ->
+          subject_token_from_credential_source(credential_source, config)
+      end
 
     headers = [{"Content-Type", "application/x-www-form-urlencoded"}]
 
@@ -393,7 +403,7 @@ defmodule Goth.Token do
         "requested_token_type" => "urn:ietf:params:oauth:token-type:access_token",
         "scope" => List.first(@default_scopes),
         "subject_token_type" => subject_token_type,
-        "subject_token" => subject_token_from_credential_source(credential_source, config)
+        "subject_token" => subject_token
       })
 
     response = request(config.http_client, method: :post, url: token_url, headers: headers, body: body)

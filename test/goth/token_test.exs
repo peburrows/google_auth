@@ -276,6 +276,30 @@ defmodule Goth.TokenTest do
     assert token.scope == nil
   end
 
+  test "fetch/1 from workload identity, subject_token supplied" do
+    token_bypass = Bypass.open()
+
+    Bypass.expect(token_bypass, fn conn ->
+      assert conn.request_path == "/v1/token"
+
+      body = ~s|{"access_token":"dummy","expires_in":599,"token_type":"Bearer"}|
+      Plug.Conn.resp(conn, 200, body)
+    end)
+
+    credentials =
+      File.read!("test/data/test-credentials-direct-workload-identity-json.json")
+      |> Jason.decode!()
+      |> Map.put("token_url", "http://localhost:#{token_bypass.port}/v1/token")
+
+    config = %{
+      source: {:workload_identity, credentials}
+    }
+
+    {:ok, token} = Goth.Token.fetch(config)
+    assert token.token == "dummy"
+    assert token.scope == nil
+  end
+
   test "fetch/1 from url-based workload identity" do
     token_bypass = Bypass.open()
     subject_token_bypass = Bypass.open()
