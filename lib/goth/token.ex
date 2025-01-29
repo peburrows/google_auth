@@ -42,6 +42,8 @@ defmodule Goth.Token do
 
         * `:metadata` - for fetching token using Google internal metadata service
 
+        * `{:mfa, mfa}` - for building one of the above credentials at runtime
+
       If `:source` is not set, Goth will:
 
         * Check application environment. You can set it with: `config :goth, json: File.read!("credentials.json")`.
@@ -153,6 +155,10 @@ defmodule Goth.Token do
 
     * `:audience` - the audience you want an identity token for, default to `nil`
       If this parameter is provided, an identity token is returned instead of an access token
+
+  #### MFA tuple - `{:mfa, {mod, fun, args}}`
+
+  For dynamically building a credential source at runtime. This function must return one of the above soruces.
 
   ## Custom HTTP Client
 
@@ -294,6 +300,11 @@ defmodule Goth.Token do
 
         request(%{config | source: {:workload_identity, credentials, opts}})
     end
+  end
+
+  defp request(%{source: {:mfa, {mod, fun, args}}} = config) do
+    source = apply(mod, fun, args)
+    request(%{config | source: source})
   end
 
   defp request(%{source: {:service_account, credentials}} = config) do
